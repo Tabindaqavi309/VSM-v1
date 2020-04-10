@@ -4,7 +4,7 @@ const TermFrequency = Data["TermFrequency"];
 const stopWord = Data["stopWord"];
 const lemmatizer = require("lemmatizer");
 const readline = require("readline");
-
+const fs = require("fs");
 //Function to take input
 function Comparator(a, b) {
   if (a < b) return -1;
@@ -23,7 +23,7 @@ function getInput() {
     });
   });
 }
-
+//Function to find Query
 async function QueryProcessing() {
   var Answer = await getInput();
   Answer = Answer.toLowerCase();
@@ -49,12 +49,20 @@ async function QueryProcessing() {
     }
   }
   ParsedQuery1.push(newWord, temp);
-  console.log(ParsedQuery1);
   var QueryVector = [];
-  var k = 0;
+  var MyfileObject2 = [];
   for (i = 0; i < Dictionary.length; i++) {
     word = Dictionary[i][0];
     var idf = Dictionary[i][2];
+    MyfileObject2[i] = [word];
+    for (j = 0; j < TermFrequency.length; j++) {
+      var index = TermFrequency[j].indexOf(word);
+      if (index != -1) {
+        var tf = TermFrequency[j][index + 1];
+        var value = tf * idf;
+        MyfileObject2[i].push({ tfIdf: value, doc: j });
+      }
+    }
     if (ParsedQuery1.includes(word)) {
       var index1 = ParsedQuery1.indexOf(word);
       var tf1 = ParsedQuery1[index1 + 1];
@@ -67,20 +75,28 @@ async function QueryProcessing() {
   }
 
   var Array1 = [];
+
   for (var i = 0; i < TermFrequency.length; i++) {
     Array1[i] = [];
+    var l = 0;
     for (var j = 0, k = 0; j < Dictionary.length; j++) {
       if (TermFrequency[i].includes(Dictionary[j][0])) {
         var idf = Dictionary[j][2];
         var index = TermFrequency[i].indexOf(Dictionary[j][0]);
         var tf = TermFrequency[i][index + 1];
         var res = tf * idf;
+
         Array1[i].push(res);
       } else {
+        var res = 0;
         Array1[i].push(0);
       }
     }
   }
+  //Writes Tf^*Idf of every word in Index File
+  fs.writeFile("Indexes.txt", JSON.stringify(MyfileObject2), function (err) {
+    if (err) console.log(err);
+  });
   var Sum = [];
   var sum = 0;
   var square1 = 0;
@@ -89,8 +105,11 @@ async function QueryProcessing() {
     sum = 0;
     square1 = 0;
     square2 = 0;
+    var len = MyfileObject2[i].length;
+    var k = 0;
     for (var j = 0; j < QueryVector.length; j++) {
       var x = Array1[i][j];
+
       var y = QueryVector[j];
       square1 += x * x;
       square2 += y * y;
@@ -106,14 +125,16 @@ async function QueryProcessing() {
     return b[0] - a[0];
   });
   var count = 0;
+  var Doclist = [];
   largest = Sum[i];
   for (i = 0; i < Sum.length; i++) {
     if (Sum[i][0] > 0.0005) {
       console.log(Sum[i]);
-      console.log(Sum[i][1]);
+      Doclist.push(Sum[i][1]);
       count++;
     }
   }
+  console.log(Doclist);
   console.log("Length:" + count);
 }
 

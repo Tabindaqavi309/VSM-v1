@@ -147,5 +147,5 @@ for (var j = 0; j < 56; j++) {
 
 //Calling InvertedIndex
 var Dictionary = MakeInvertedIndex(Result);
-
+//console.log(lemmatizer.lemmatizer("developments"));
 module.exports = { TermFrequency, stopWord, Dictionary };
